@@ -32,11 +32,27 @@ void Leitor::montarArvore() {
     this->Arvore = new HuffmanTree(listaPalavras);
 }
 
-void Leitor::Descomprimir(string saida) {
-    char carimbo;
-    int n = sizeof(char);
+void Leitor::Descomprimir() {
+    char bucket;
+    int n = 0;
     Node* ponteiro = Arvore->root;
     for(int i = 0; i < qtdPalavras; i++) {
+        if(n == 0) {
+            bucket = entrada->get();
+            n = sizeof(char)*8;
+        }
+
+        if(ponteiro->leaf()) {
+            *saida << ponteiro->token;
+            ponteiro = Arvore->root;
+        }
         
+        if(bucket & 0x80) {
+            ponteiro = ponteiro->right;
+        }
+        else {
+            ponteiro = ponteiro->left;
+        }
+        bucket = bucket << 1; n--;
     }
 }

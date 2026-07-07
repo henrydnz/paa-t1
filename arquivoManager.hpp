@@ -28,9 +28,9 @@ class Leitor {
         char pegarCarimbo();
     public:
 
-    void Descomprimir(string saida);
+    void Descomprimir();
 
-    Leitor(string entrada);
+    Leitor(string entrada, string saida);
     ~Leitor();
 }
 
