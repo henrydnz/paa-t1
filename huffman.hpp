@@ -10,7 +10,9 @@ using namespace std;
 
 class SymbolTable{
     public:
-    unordered_map<string, long long> symbols;
+    vector<pair<string, int>> symbols;
+    int tokenCount;
+    int size;
 
     SymbolTable(string filename, bool byWord);
     void addSymbol(string str);
@@ -24,7 +26,7 @@ struct Node {
 
     Node(string token, Node* left, Node* right) : 
         token(token), left(left), right(right) {}
-    bool leaf() { return !left && !right; }
+    bool isLeaf() { return !left && !right; }
 };
 
 // serve pra salvar frequencia de tokens, que eh inutil na arvore final e ocuparia mt espaco
@@ -41,10 +43,9 @@ class HuffmanTree{
     public:
 
     Node* root = nullptr;
-    SymbolTable table;
+    SymbolTable symbolTable;
     priority_queue<NodeWrapper> queue;
-    int nodeAmount;
-    int biggestLen;
+    unordered_map<string, string> huffmanCodes;
 
     void getQueue();
     void buildTree();
@@ -52,10 +53,9 @@ class HuffmanTree{
     HuffmanTree(string filename, bool byWord);
     ~HuffmanTree();
 
-    // debug
-    // unordered_map<string, string> huffmanCodes;
-    // void generateCodes(Node* node, string currentCode);
-    // void showTree();
+    int getSymbolAmount();
+    void generateCodes(Node* node, string currentCode);
+    //void showTree();
 
 };
 

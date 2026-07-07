@@ -24,27 +24,35 @@ SymbolTable::SymbolTable(string filename, bool byWord){
         }
     }
 
+    file.close();
+
     if(symbols.empty()) {
         cerr << "O arquivo inserido parece estar vazio!" << endl;
         return;
     }
 
-    //this->addSymbol("PSEUDO_EOF");
+    tokenCount = 0;
+    for(auto sym : symbols) 
+        tokenCount += sym.second;
+        
+    size = symbols.size();
 }
 
 void SymbolTable::addSymbol(string str){
-    auto found = symbols.find(str);
-    if(found != symbols.end()) found->second++;
-    else symbols[str] = 1;
+    for(auto& sym : symbols){
+        if(sym.first == str){
+            sym.second++; return;
+        }
+    }
+    symbols.push_back(make_pair(str, 1));
 }
-
 
 void SymbolTable::showTable(){
     for(auto sym : symbols){ cout << "symbol " << sym.first << ": " << sym.second << endl; }
 }
 
 void HuffmanTree::getQueue(){
-    for(auto sym : table.symbols){
+    for(auto sym : symbolTable.symbols){
         string token = sym.first;
         long long counter = sym.second;
 
@@ -71,36 +79,33 @@ void HuffmanTree::buildTree(){
     root = root_nw.node;
 }
 
-HuffmanTree::HuffmanTree(string filename, bool byWord) : table(filename, byWord){
+HuffmanTree::HuffmanTree(string filename, bool byWord) : symbolTable(filename, byWord){
     getQueue();
-    nodeAmount = queue.size();
     buildTree();
-    //generateCodes(root, "");
+    generateCodes(root, "");
 }
 
 // debug
 
-// void HuffmanTree::generateCodes(Node* node, string currentCode) {
-//     if (!node)
-//         return;
+void HuffmanTree::generateCodes(Node* node, string currentCode) {
+    if (!node) return;
 
-//     if(node->leaf()){
-//         huffmanCodes[node->token] = currentCode;
-//         return;
-//     }
+    if(node->isLeaf()){
+        huffmanCodes[node->token] = currentCode;
+        return;
+    }
 
-//     generateCodes(node->left, currentCode + "0");
-//     generateCodes(node->right, currentCode + "1");
-// }
+    generateCodes(node->left, currentCode + "0");
+    generateCodes(node->right, currentCode + "1");
+}
 
-// static void printNode(Node* node, unordered_map<string, string> huffmanCodes){
-//     if(!node) return;
+static void printNode(Node* node, unordered_map<string, string> huffmanCodes){
+    if(!node) return;
 
-//     printNode(node->left,huffmanCodes);
-//     if(node->token != "")
-//         cout << "Symbol: " << node->token << " | " << huffmanCodes[node->token] <<  endl;
-//     printNode(node->right, huffmanCodes);
-// }
+    printNode(node->left,huffmanCodes);
+    if(node->token != "") cout << "Symbol: " << node->token << " | " << huffmanCodes[node->token] <<  endl;
+    printNode(node->right, huffmanCodes);
+}
 
 // void HuffmanTree::showTree(){ printNode(root, huffmanCodes); }
 
@@ -114,4 +119,6 @@ static void freeNode(Node* node){
 }
 
 HuffmanTree::~HuffmanTree(){ freeNode(root); }
+
+
 

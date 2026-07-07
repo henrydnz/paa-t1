@@ -1,42 +1,60 @@
 #include "arquivoManager.hpp"
 #include "huffman.hpp"
 
-static void writeNodeHelper(ofstream& outFile, Node* node, int& pos){
-    if(!node) return;
+static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
+    string token = symbol.first;
+    int tokenLen = token.length();
+    int frequency = symbol.second;
 
-    FileNode filenode;
-    filenode.right = -1;
-    filenode.left = -1;
-    
-    if(node->right){
-        writeNodeHelper(outFile, node->right, pos);
-        filenode.right = pos-1;
-    }
-    if(node->left){
-        writeNodeHelper(outFile, node->left, pos);
-        filenode.left = pos-1;
-    }
+    outFile.seekp(pos, ios::beg);
 
-    filenode.token = node->token;
+    outFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
+    pos += sizeof(int);
 
-    outFile.seekp(sizeof(Header) + sizeof(FileNode) * pos, ios::beg);
-    
-    pos++;
+    outFile.write(reinterpret_cast<char*>(&token), sizeof(token));
+    pos += sizeof(token);
+
+    outFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
+
 }
 
-void writeTree(string filename, HuffmanTree tree){
+static void writeSymbolTable(ofstream& outFile, SymbolTable st, int& pos){
+    for(pair sym : st.symbols){
+        string token = sym.first;
+        size_t tokenSize = sizeof(token);
+        int frequency = sym.second;
+
+        outFile.seekp(pos, ios::beg);
+        outFile.write(reinterpret_cast<char*>(&token), tokenSize);
+        pos += tokenSize;
+        outFile.write(reinterpret_cast<char*>(&frequency), intSize);
+        pos += intSize;
+    }
+}
+
+static void writeHeader(ofstream& outFile, SymbolTable symbolTable, int& pos){
+    int leafCount = symbolTable.size;
+    int tokenCount = symbolTable.tokenCount;
+
+    outFile.write(reinterpret_cast<char*>(&leafCount), sizeof(int));
+    pos+=sizeof(int);
+
+    outFile.write(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    pos+=sizeof(int);
+}
+
+void compress(string filename, HuffmanTree ht){
     ofstream outFile(filename, ios::binary);
 
     if(!outFile){
-        cerr << "O arquivo " << filename << " nao pode ser aberto" << endl;
+        cerr << "Nao foi possivel criar o arquivo " << filename << ".\n";
         return;
     }
-    
-    Header last_node_pos = tree.nodeAmount - 1;
-    outFile.write(reinterpret_cast<const char*>(&last_node_pos), sizeof(Header));
-    
-    int pos = 0;
-    writeNodeHelper(outFile, tree.root, pos);
 
-    outFile.close();
+    int pos = 0;
+
+    writeHeader(outFile, ht.symbolTable, pos);
+    writeSymbolTable(outFile, ht.symbolTable, pos);
+
+
 }

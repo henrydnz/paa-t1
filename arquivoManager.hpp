@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include "huffman.hpp"
+
 using namespace std;
 
 typedef int Header;
@@ -14,4 +15,4 @@ struct FileNode{
     int right;
 };
 
-void writeTree(string filename, HuffmanTree tree);
+void compress(HuffmanTree ht);
