@@ -24,14 +24,12 @@ class Leitor {
         HuffmanTree* Arvore;
 
         void montarArvore();
-        int lerInteiro();
-        char pegarCarimbo();
     public:
 
     void Descomprimir();
 
     Leitor(string entrada, string saida);
-    ~Leitor();
+    
 }
 
 // # Cab_Folhas

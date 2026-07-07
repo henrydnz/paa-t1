@@ -4,16 +4,10 @@
 Leitor::Leitor(string entrada, string saida) {
     this->entrada = new ifstream(entrada, ios::binary);
     this->saida = new ofstream(saida);
-    this->qtdFolhas = lerInteiro();
-    this->qtdPalavras = lerInteiro();
+    this->entrada->read(reinterpret_cast<char*>(&qtdFolhas), sizeof(qtdFolhas));
+    this->entrada->read(reinterpret_cast<char*>(&qtdPalavras), sizeof(qtdPalavras));
 
     void montarArvore();
-}
-
-int Leitor::lerInteiro() {
-    int valor;
-    entrada->read(reinterpret_cast<char*>(&valor), sizeof(valor));
-    return valor;
 }
 
 void Leitor::montarArvore() {
@@ -22,10 +16,10 @@ void Leitor::montarArvore() {
     int tamanho;
     int frequencia;
     for(int i = 0; i < qtdFolhas ; i++) {
-        tamanho = lerInteiro();
+        entrada->read(reinterpret_cast<char*>(&tamanho), sizeof(tamanho));
         palavra.resize(tamanho);
         entrada->read((&palavra[0]), tamanho);
-        frequencia = lerInteiro();
+        entrada->read(reinterpret_cast<char*>(&frequencia), sizeof(frequencia));
         listaPalavras.push_back(make_pair(palavra, frequencia));
     }
 
@@ -37,22 +31,29 @@ void Leitor::Descomprimir() {
     int n = 0;
     Node* ponteiro = Arvore->root;
     for(int i = 0; i < qtdPalavras; i++) {
+
         if(n == 0) {
             bucket = entrada->get();
-            n = sizeof(char)*8;
-        }
-
-        if(ponteiro->leaf()) {
-            *saida << ponteiro->token;
-            ponteiro = Arvore->root;
+            if (entrada->eof()) {cerr << "EOF!" << endl; break;}
+            n = 8;
         }
         
         if(bucket & 0x80) {
             ponteiro = ponteiro->right;
         }
+
         else {
             ponteiro = ponteiro->left;
         }
         bucket = bucket << 1; n--;
+
+        if(ponteiro->leaf()) {
+            *saida << ponteiro->token;
+            ponteiro = Arvore->root;
+        }
     }
+}
+
+Leitor::~Leitor() {
+
 }
