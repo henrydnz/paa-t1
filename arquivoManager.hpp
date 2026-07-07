@@ -5,6 +5,8 @@
 #include <string>
 #include "huffman.hpp"
 
+using namespace std;
+
 class Leitor {
     private:
         int qtdPalavras;
@@ -16,11 +18,12 @@ class Leitor {
         void montarArvore();
     public:
 
-    void Descomprimir();
+    void descomprimir();
+    void comprimir(string filename, bool byWord);
 
     Leitor(string entrada, string saida);
     
-}
+};
 
 // # Cab_Folhas
 // -> Quantidade de Folhas
@@ -28,6 +31,5 @@ class Leitor {
 // -> Folha("Palavra","Codigo")
 // # fim Cab_Folhas
 // Arquivo Compactado
-using namespace std;
 
-void compress(string filename, bool byWord);
+

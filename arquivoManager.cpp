@@ -26,7 +26,7 @@ void Leitor::montarArvore() {
     this->Arvore = new HuffmanTree(listaPalavras);
 }
 
-void Leitor::Descomprimir() {
+void Leitor::descomprimir() {
     char bucket;
     int n = 0;
     Node* ponteiro = Arvore->root;
@@ -53,8 +53,8 @@ void Leitor::Descomprimir() {
         }
     }
 }
-
-Leitor::~Leitor() {
+    
+//Leitor::~Leitor()
 
 static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
     string token = symbol.first;
@@ -81,7 +81,7 @@ static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
     pos+=sizeof(int);
 }
 
-void compress(string filename, bool byWord){
+void Leitor::comprimir(string filename, bool byWord){
     ifstream inFile(filename+".txt");
 
     if(!inFile.is_open()){
@@ -109,6 +109,8 @@ void compress(string filename, bool byWord){
 
     for(pair symbol : ht.symbols)  
         writeSymbol(outFile, symbol, pos);
+
+    // escerever mensagem codificada
     
     //outFile.close();
 }
