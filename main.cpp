@@ -2,7 +2,9 @@
 #include "arquivoManager.hpp"
 
 int main(){
-    HuffmanTree htWords("words.txt", true);
-    writeTree("teste.bin", htWords);
+    compress("letters", false);
+
+    // BUG!!!!!!!!!!!
+    // compress("words", true);
 }
 

@@ -7,10 +7,4 @@
 
 using namespace std;
 
-struct FileNode{
-    string token;
-    int left;
-    int right;
-};
-
-void compress(string filename);
+void compress(string filename, bool byWord);

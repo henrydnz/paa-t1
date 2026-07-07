@@ -1,8 +1,6 @@
 #include "arquivoManager.hpp"
 #include "huffman.hpp"
 
-
-
 static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
     string token = symbol.first;
     int tokenLen = token.length();
@@ -20,42 +18,42 @@ static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
     pos += sizeof(int);
 }
 
-static void writeHeader(ofstream& outFile, SymbolTable symbolTable, int& pos){
-    int leafCount = symbolTable.size;
-    int tokenCount = symbolTable.tokenCount;
-
-    outFile.write(reinterpret_cast<char*>(&leafCount), sizeof(int));
+static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
+    outFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
     pos+=sizeof(int);
 
-    outFile.write(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    outFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
     pos+=sizeof(int);
 }
 
-static HuffmanTree getTree(){
-    
-}
 void compress(string filename, bool byWord){
-    ifstream file(filename);
-    if(!file.is_open()){
-        cerr << "Arquivo de texto " << filename << " não pode ser aberto";
+    ifstream inFile(filename+".txt");
+
+    if(!inFile.is_open()){
+        cerr << "Arquivo de texto " << filename+".txt" << " não pode ser aberto";
         return;
     }
 
-    HuffmanTree ht(file, byWord);
+    HuffmanTree ht(inFile, byWord);
+    inFile.close();
 
+    // DEBUG
+    ht.showTree();
 
     
-    ofstream outFile(filename, ios::binary);
+    ofstream outFile(filename+".bin", ios::binary);
+
     if(!outFile){
         cerr << "Nao foi possivel criar o arquivo " << filename << " para compressao.\n";
         return;
     }
     
-    
     int pos = 0;
-    writeHeader(outFile, ht.symbolTable, pos);
-    for(pair symbol : st.symbols)  writeSymbol(outFile, symbol, pos);
 
+    writeHeader(outFile, ht, pos);
+
+    for(pair symbol : ht.symbols)  
+        writeSymbol(outFile, symbol, pos);
     
-
+    //outFile.close();
 }
