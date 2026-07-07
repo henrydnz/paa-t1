@@ -1,42 +1,42 @@
 #include "arquivoManager.hpp"
 #include "huffman.hpp"
 
-static void writeNodeHelper(ofstream& outFile, Node* node, int& pos){
-    if(!node) return;
+Leitor::Leitor(string entrada, string saida) {
+    this->entrada = new ifstream(entrada, ios::binary);
+    this->saida = new ofstream(saida);
+    this->qtdFolhas = lerInteiro();
+    this->qtdPalavras = lerInteiro();
 
-    FileNode filenode;
-    filenode.right = -1;
-    filenode.left = -1;
-    
-    if(node->right){
-        writeNodeHelper(outFile, node->right, pos);
-        filenode.right = pos-1;
-    }
-    if(node->left){
-        writeNodeHelper(outFile, node->left, pos);
-        filenode.left = pos-1;
-    }
-
-    filenode.token = node->token;
-
-    outFile.seekp(sizeof(Header) + sizeof(FileNode) * pos, ios::beg);
-    
-    pos++;
+    void montarArvore();
 }
 
-void writeTree(string filename, HuffmanTree tree){
-    ofstream outFile(filename, ios::binary);
+int Leitor::lerInteiro() {
+    int valor;
+    entrada->read(reinterpret_cast<char*>(&valor), sizeof(valor));
+    return valor;
+}
 
-    if(!outFile){
-        cerr << "O arquivo " << filename << " nao pode ser aberto" << endl;
-        return;
+void Leitor::montarArvore() {
+    vector<pair<string, int>> listaPalavras;
+    string palavra;
+    int tamanho;
+    int frequencia;
+    for(int i = 0; i < qtdFolhas ; i++) {
+        tamanho = lerInteiro();
+        palavra.resize(tamanho);
+        entrada->read((&palavra[0]), tamanho);
+        frequencia = lerInteiro();
+        listaPalavras.push_back(make_pair(palavra, frequencia));
     }
-    
-    Header last_node_pos = tree.nodeAmount - 1;
-    outFile.write(reinterpret_cast<const char*>(&last_node_pos), sizeof(Header));
-    
-    int pos = 0;
-    writeNodeHelper(outFile, tree.root, pos);
 
-    outFile.close();
+    this->Arvore = new HuffmanTree(listaPalavras);
+}
+
+void Leitor::Descomprimir(string saida) {
+    char carimbo;
+    int n = sizeof(char);
+    Node* ponteiro = Arvore->root;
+    for(int i = 0; i < qtdPalavras; i++) {
+        
+    }
 }
