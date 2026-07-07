@@ -3,19 +3,17 @@
 #include <fstream>
 #include <queue>
 
+// === === SymbolTable
 
-SymbolTable::SymbolTable(string filename, bool byWord){
-    ifstream file(filename);
+// === construtores 
 
-    if(!file.is_open()) {
-        cerr << "Nao conseguiu abrir o arquivo (" << filename << ")." << endl;
-        return;
-    }
-
+// cria uma tabela de simbolos a partir de uma ifstream de um arquivo .txt e o booleano by word (pra codificacao)
+SymbolTable::SymbolTable(ifstream& file, bool byWord){
     if(!byWord){
         char c;
         while(file.get(c)){
-            this->addSymbol(string(1,c));
+            if(!(c == '\n' || c == ' '))
+                this->addSymbol(string(1,c));
         }
     } else {
         string word;
@@ -38,6 +36,22 @@ SymbolTable::SymbolTable(string filename, bool byWord){
     size = symbols.size();
 }
 
+// cria uma tabela de simbolos como uma copia de uma outra tabela em forma de vector pair (pra decodificacao)
+SymbolTable::SymbolTable(vector<pair<string, int>> symbols) : symbols(symbols){
+    if(symbols.empty()) {
+        cerr << "O arquivo inserido parece estar vazio!" << endl;
+        return;
+    }
+
+    tokenCount = 0;
+    for(auto sym : symbols) 
+        tokenCount += sym.second;
+        
+    size = symbols.size();
+}
+
+// === Metodos
+
 void SymbolTable::addSymbol(string str){
     for(auto& sym : symbols){
         if(sym.first == str){
@@ -51,42 +65,43 @@ void SymbolTable::showTable(){
     for(auto sym : symbols){ cout << "symbol " << sym.first << ": " << sym.second << endl; }
 }
 
-void HuffmanTree::getQueue(){
-    for(auto sym : symbolTable.symbols){
-        string token = sym.first;
-        long long counter = sym.second;
+// === === HuffmanTree
 
-        Node* node = new Node(token, nullptr, nullptr);
-        queue.push(NodeWrapper(node, counter)); 
-    }
-}
+// === construtores
 
-void HuffmanTree::buildTree(){
-    while(queue.size() > 1) {
-        NodeWrapper w1 = queue.top(); queue.pop();
-        NodeWrapper w2 = queue.top(); queue.pop();
-    
-        Node* n1 = w1.node;
-        Node* n2 = w2.node;
-        
-        Node* parent_node = new Node("", n1, n2);
-        NodeWrapper parent_nw(parent_node, w1.count + w2.count);
-
-        queue.push(parent_nw);
-    }
-
-    NodeWrapper root_nw = queue.top(); queue.pop();
-    root = root_nw.node;
-}
-
-HuffmanTree::HuffmanTree(string filename, bool byWord) : symbolTable(filename, byWord){
-    getQueue();
+// constroi arvore a partir do arquivo de texto (pra condificacao)
+HuffmanTree::HuffmanTree(ifstream& file, bool byWord) : symbolTable(file, byWord){
     buildTree();
     generateCodes(root, "");
 }
 
-// debug
 
+// constroi arvore a partir de um vector pair (pra decodificacao)
+HuffmanTree::HuffmanTree(vector<pair<string, int>> symbols) : symbolTable(symbols){
+    buildTree();
+    generateCodes(root, "");
+}
+
+// === Metodos
+
+// constroi a arvore a partir de uma fila ordenada fila de nos
+void HuffmanTree::buildTree(){
+    priority_queue<Node*> nodeQueue;
+
+    for(auto sym : symbolTable.symbols)
+        nodeQueue.push(new Node(sym.first, sym.second));
+
+    while(nodeQueue.size() > 1) {
+        Node* n1 = nodeQueue.top(); nodeQueue.pop();
+        Node* n2 = nodeQueue.top(); nodeQueue.pop();
+        
+        nodeQueue.push(new Node(n1->count + n2->count, n1, n2));
+    }
+
+    root = nodeQueue.top(); nodeQueue.pop();
+}
+
+// funcao recursiva pra construir a hash de token->codigoBin (em string)
 void HuffmanTree::generateCodes(Node* node, string currentCode) {
     if (!node) return;
 
@@ -99,16 +114,18 @@ void HuffmanTree::generateCodes(Node* node, string currentCode) {
     generateCodes(node->right, currentCode + "1");
 }
 
+// funcao recursiva pra mostrar nos da arvore
 static void printNode(Node* node, unordered_map<string, string> huffmanCodes){
     if(!node) return;
 
     printNode(node->left,huffmanCodes);
     if(node->token != "") cout << "Symbol: " << node->token << " | " << huffmanCodes[node->token] <<  endl;
     printNode(node->right, huffmanCodes);
+
 }
+void HuffmanTree::showTree(){ printNode(root, huffmanCodes); }
 
-// void HuffmanTree::showTree(){ printNode(root, huffmanCodes); }
-
+// funcao recursiva pro destructor
 static void freeNode(Node* node){
     if(!node) return;
 
@@ -117,7 +134,6 @@ static void freeNode(Node* node){
 
     delete node;
 }
-
 HuffmanTree::~HuffmanTree(){ freeNode(root); }
 
 

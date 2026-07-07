@@ -7,12 +7,10 @@
 
 using namespace std;
 
-typedef int Header;
-
 struct FileNode{
     string token;
     int left;
     int right;
 };
 
-void compress(HuffmanTree ht);
+void compress(string filename);
