@@ -2,9 +2,8 @@
 #include "arquivoManager.hpp"
 
 int main(){
-    compress("letters", false);
+    Leitor l("letters.txt", "letters.bin");
+    l.comprimir(false);
 
-    // BUG!!!!!!!!!!!
-    // compress("words", true);
 }
 

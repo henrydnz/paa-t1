@@ -11,18 +11,17 @@ class Leitor {
     private:
         int qtdPalavras;
         int qtdFolhas;
-        ifstream* entrada;
-        ofstream* saida;
+        ifstream* original;
+        ofstream* comprimido;
         HuffmanTree* Arvore;
 
         void montarArvore();
     public:
 
     void descomprimir();
-    void comprimir(string filename, bool byWord);
+    void comprimir(bool byWord);
 
     Leitor(string entrada, string saida);
-    
 };
 
 // # Cab_Folhas

@@ -1,25 +1,35 @@
 #include "arquivoManager.hpp"
 #include "huffman.hpp"
 
-Leitor::Leitor(string entrada, string saida) {
-    this->entrada = new ifstream(entrada, ios::binary);
-    this->saida = new ofstream(saida);
-    this->entrada->read(reinterpret_cast<char*>(&qtdFolhas), sizeof(qtdFolhas));
-    this->entrada->read(reinterpret_cast<char*>(&qtdPalavras), sizeof(qtdPalavras));
+Leitor::Leitor(string original, string comprimido) {
+    this->original = new ifstream(original, ios::binary);
+    if(!(*this->original).is_open()){
+        cerr << "Arquivo de texto " << original << " não pode ser aberto";
+        return;
+    }
+
+    this->comprimido = new ofstream(comprimido);
+    if(!(*this->comprimido)){
+        cerr << "Nao foi possivel criar o arquivo " << comprimido << " para compressao.\n";
+        return;
+    }
+
+    this->original->read(reinterpret_cast<char*>(&qtdFolhas), sizeof(qtdFolhas));
+    this->original->read(reinterpret_cast<char*>(&qtdPalavras), sizeof(qtdPalavras));
 
     void montarArvore();
 }
 
 void Leitor::montarArvore() {
-    vecor<pair<string, int>> listaPalavras;
+    vector<pair<string, int>> listaPalavras;
     string palavra;
     int tamanho;
     int frequencia;
     for(int i = 0; i < qtdFolhas ; i++) {
-        entrada->read(reinterpret_cast<char*>(&tamanho), sizeof(tamanho));
+        original->read(reinterpret_cast<char*>(&tamanho), sizeof(tamanho));
         palavra.resize(tamanho);
-        entrada->read((&palavra[0]), tamanho);
-        entrada->read(reinterpret_cast<char*>(&frequencia), sizeof(frequencia));
+        original->read((&palavra[0]), tamanho);
+        original->read(reinterpret_cast<char*>(&frequencia), sizeof(frequencia));
         listaPalavras.push_back(make_pair(palavra, frequencia));
     }
 
@@ -33,8 +43,8 @@ void Leitor::descomprimir() {
     for(int i = 0; i < qtdPalavras; i++) {
 
         if(n == 0) {
-            bucket = entrada->get();
-            if (entrada->eof()) {cerr << "EOF!" << endl; break;}
+            bucket = original->get();
+            if (original->eof()) {cerr << "EOF!" << endl; break;}
             n = 8;
         }
         
@@ -47,13 +57,13 @@ void Leitor::descomprimir() {
         }
         bucket = bucket << 1; n--;
 
-        if(ponteiro->leaf()) {
-            *saida << ponteiro->token;
+        if(ponteiro->isLeaf()) {
+            *comprimido << ponteiro->token;
             ponteiro = Arvore->root;
         }
     }
 }
-    
+
 //Leitor::~Leitor()
 
 static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
@@ -81,34 +91,20 @@ static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
     pos+=sizeof(int);
 }
 
-void Leitor::comprimir(string filename, bool byWord){
-    ifstream inFile(filename+".txt");
+void Leitor::comprimir(bool byWord){
+    
 
-    if(!inFile.is_open()){
-        cerr << "Arquivo de texto " << filename+".txt" << " não pode ser aberto";
-        return;
-    }
-
-    HuffmanTree ht(inFile, byWord);
-    inFile.close();
+    HuffmanTree ht(*this->original, byWord);
 
     // DEBUG
     ht.showTree();
-
-    
-    ofstream outFile(filename+".bin", ios::binary);
-
-    if(!outFile){
-        cerr << "Nao foi possivel criar o arquivo " << filename << " para compressao.\n";
-        return;
-    }
     
     int pos = 0;
 
-    writeHeader(outFile, ht, pos);
+    writeHeader(*this->comprimido, ht, pos);
 
     for(pair symbol : ht.symbols)  
-        writeSymbol(outFile, symbol, pos);
+        writeSymbol(*this->comprimido, symbol, pos);
 
     // escerever mensagem codificada
     
