@@ -3,19 +3,52 @@
 #include <fstream>
 #include <queue>
 
+// === === HuffmanTree
 
-SymbolTable::SymbolTable(string filename, bool byWord){
-    ifstream file(filename);
+// === construtores
 
-    if(!file.is_open()) {
-        cerr << "Nao conseguiu abrir o arquivo (" << filename << ")." << endl;
-        return;
+// constroi arvore a partir do arquivo de texto (pra condificacao)
+HuffmanTree::HuffmanTree(ifstream& file, bool byWord) {
+    buildSymbolTable(file, byWord);
+
+    tokenCount = 0;
+    for(auto sym : symbols) 
+        tokenCount += sym.second;
+
+    leafCount = symbols.size();
+
+    buildTree();
+    generateCodes(root, "");
+}
+
+
+// constroi arvore a partir de um vector pair (pra decodificacao)
+HuffmanTree::HuffmanTree(vector<pair<string, int>> symbols) : symbols(symbols) {
+    leafCount = symbols.size();
+    tokenCount = 0;
+    for(auto sym : symbols) 
+        tokenCount += sym.second;
+
+    buildTree();
+    generateCodes(root, "");
+}
+
+// === Metodos
+void HuffmanTree::addSymbol(string symbol){
+    for(auto& sym : symbols){
+        if(sym.first == symbol){
+            sym.second++; return;
+        }
     }
+    symbols.push_back(make_pair(symbol, 1));
+}
 
+void HuffmanTree::buildSymbolTable(ifstream& file, bool byWord){
     if(!byWord){
         char c;
         while(file.get(c)){
-            this->addSymbol(string(1,c));
+            if(!(c == '\n' || c == ' '))
+                this->addSymbol(string(1,c));
         }
     } else {
         string word;
@@ -23,87 +56,78 @@ SymbolTable::SymbolTable(string filename, bool byWord){
             this->addSymbol(word);
         }
     }
+}
 
-    if(symbols.empty()) {
-        cerr << "O arquivo inserido parece estar vazio!" << endl;
+// constroi a arvore a partir de uma fila ordenada fila de nos
+void HuffmanTree::buildTree(){
+    struct CompareNode {
+        bool operator()(Node* n1, Node* n2){
+            return n1->count > n2->count; 
+        }
+    };
+    priority_queue<Node*, vector<Node*>, CompareNode> nodeQueue;
+
+    for(auto sym : symbols)
+        nodeQueue.push(new Node(sym.first, sym.second));
+
+    while(nodeQueue.size() > 1) {
+        Node* n1 = nodeQueue.top(); nodeQueue.pop();
+        Node* n2 = nodeQueue.top(); nodeQueue.pop();
+        
+        nodeQueue.push(new Node(n1->count + n2->count, n1, n2));
+    }
+
+    root = nodeQueue.top(); nodeQueue.pop();
+}
+
+// funcao recursiva pra construir a hash de token->codigoBin (em string)
+void HuffmanTree::generateCodes(Node* node, string currentCode) {
+    if (!node) return;
+
+    if(node->isLeaf()){
+        huffmanCodes[node->token] = currentCode;
         return;
     }
 
-    //this->addSymbol("PSEUDO_EOF");
+    generateCodes(node->left, currentCode + "0");
+    generateCodes(node->right, currentCode + "1");
 }
 
-void SymbolTable::addSymbol(string str){
-    auto found = symbols.find(str);
-    if(found != symbols.end()) found->second++;
-    else symbols[str] = 1;
-}
-
-
-void SymbolTable::showTable(){
-    for(auto sym : symbols){ cout << "symbol " << sym.first << ": " << sym.second << endl; }
-}
-
-void HuffmanTree::getQueue(){
-    for(auto sym : table.symbols){
-        string token = sym.first;
-        long long counter = sym.second;
-
-        Node* node = new Node(token, nullptr, nullptr);
-        queue.push(NodeWrapper(node, counter)); 
+void HuffmanTree::showSymbols(){
+    cout << "showing symbols and frequencies for the current tree" << endl;
+    for(pair symbol : symbols){
+        cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
     }
 }
 
-void HuffmanTree::buildTree(){
-    while(queue.size() > 1) {
-        NodeWrapper w1 = queue.top(); queue.pop();
-        NodeWrapper w2 = queue.top(); queue.pop();
-    
-        Node* n1 = w1.node;
-        Node* n2 = w2.node;
-        
-        Node* parent_node = new Node("", n1, n2);
-        NodeWrapper parent_nw(parent_node, w1.count + w2.count);
+void HuffmanTree::showCodes(){
+    cout << "showing huffman codes for the current tree" << endl;
+    for(auto symbol : huffmanCodes){
+        cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
+    }
+}
 
-        queue.push(parent_nw);
+// funcao recursiva pra mostrar nos da arvore
+static void printNode(Node* node, const unordered_map<string, string>& huffmanCodes){
+    if(!node) return;
+
+    printNode(node->left,huffmanCodes);
+
+    if(node->token != "") {
+        cout << "Symbol (" << node->token << ")" << endl;
+        cout << "    code: " << huffmanCodes.at(node->token) <<  endl;
+        cout << "    frequency: " << node->count << endl;
     }
 
-    NodeWrapper root_nw = queue.top(); queue.pop();
-    root = root_nw.node;
+    printNode(node->right, huffmanCodes);
+
+}
+void HuffmanTree::showTree(){ 
+    cout << "showing current tree" << endl;
+    printNode(root, huffmanCodes); 
 }
 
-HuffmanTree::HuffmanTree(string filename, bool byWord) : table(filename, byWord){
-    getQueue();
-    nodeAmount = queue.size();
-    buildTree();
-    //generateCodes(root, "");
-}
-
-// debug
-
-// void HuffmanTree::generateCodes(Node* node, string currentCode) {
-//     if (!node)
-//         return;
-
-//     if(node->leaf()){
-//         huffmanCodes[node->token] = currentCode;
-//         return;
-//     }
-
-//     generateCodes(node->left, currentCode + "0");
-//     generateCodes(node->right, currentCode + "1");
-// }
-
-// static void printNode(Node* node, unordered_map<string, string> huffmanCodes){
-//     if(!node) return;
-
-//     printNode(node->left,huffmanCodes);
-//     if(node->token != "")
-//         cout << "Symbol: " << node->token << " | " << huffmanCodes[node->token] <<  endl;
-//     printNode(node->right, huffmanCodes);
-// }
-
-// void HuffmanTree::showTree(){ printNode(root, huffmanCodes); }
-
+// funcao recursiva pro destructor
 static void freeNode(Node* node){
     if(!node) return;
 
@@ -112,6 +136,7 @@ static void freeNode(Node* node){
 
     delete node;
 }
-
 HuffmanTree::~HuffmanTree(){ freeNode(root); }
+
+
 

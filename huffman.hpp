@@ -8,54 +8,51 @@
 
 using namespace std;
 
-class SymbolTable{
+// estrutura de no da arvore
+class Node {
     public:
-    unordered_map<string, long long> symbols;
 
-    SymbolTable(string filename, bool byWord);
-    void addSymbol(string str);
-    void showTable();
-};
-
-struct Node {
     string token;
+    int count; 
+
     Node* left;
     Node* right;
 
-    Node(string token, Node* left, Node* right) : 
-        token(token), left(left), right(right) {}
-    bool leaf() { return !left && !right; }
+    Node(int count, Node* left, Node* right) : token(""), count(count), left(left), right(right) {}
+    Node(string token, int count) : token(token), count(count), left(nullptr), right(nullptr) {}
+
+    bool operator<(const Node& other) const { return count > other.count; }
+
+    bool isLeaf() { return !left && !right; }
 };
 
-// serve pra salvar frequencia de tokens, que eh inutil na arvore final e ocuparia mt espaco
-struct NodeWrapper {
-    Node* node;
-    long long count;
-
-    NodeWrapper(Node* node, long long count) : node(node), count(count) {}
-    // comparador reverso porque a fila ordenada precisa popar os menores
-    bool operator<(const NodeWrapper& other) const { return count > other.count; }
-};
-
+// estrutura da arvore binaria de huffman
 class HuffmanTree{    
+    private:
+
+    void addSymbol(string symbol);
+    void buildSymbolTable(ifstream& file, bool byWord);
+    void buildTree();
+
     public:
 
     Node* root = nullptr;
-    SymbolTable table;
-    priority_queue<NodeWrapper> queue;
-    int nodeAmount;
-    int biggestLen;
 
-    void getQueue();
-    void buildTree();
+    //SymbolTable symbolTable;
+    vector<pair<string, int>> symbols;
+    int tokenCount;
+    int leafCount;
 
-    HuffmanTree(string filename, bool byWord);
+    unordered_map<string, string> huffmanCodes;
+
+    HuffmanTree(ifstream& file, bool byWord);
+    HuffmanTree(vector<pair<string, int>> symbolTable);
     ~HuffmanTree();
 
-    // debug
-    // unordered_map<string, string> huffmanCodes;
-    // void generateCodes(Node* node, string currentCode);
-    // void showTree();
+    void generateCodes(Node* node, string currentCode);
 
+    void showSymbols();
+    void showCodes();
+    void showTree();
 };
 

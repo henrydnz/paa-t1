@@ -4,16 +4,6 @@
 #include <fstream>
 #include <string>
 #include "huffman.hpp"
-using namespace std;
-
-typedef int Header;
-
-struct FileNode{
-    string token;
-    string code;
-};
-
-void writeTree(string filename, HuffmanTree tree);
 
 class Leitor {
     private:
@@ -38,3 +28,6 @@ class Leitor {
 // -> Folha("Palavra","Codigo")
 // # fim Cab_Folhas
 // Arquivo Compactado
+using namespace std;
+
+void compress(string filename, bool byWord);
