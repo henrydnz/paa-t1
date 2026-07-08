@@ -95,7 +95,7 @@ void HuffmanTree::generateCodes(Node* node, string currentCode) {
 
 void HuffmanTree::showSymbols(){
     cout << "showing symbols and frequencies for the current tree" << endl;
-    for(pair symbol : symbols){
+    for(pair<string, int> symbol : symbols){
         cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
     }
 }

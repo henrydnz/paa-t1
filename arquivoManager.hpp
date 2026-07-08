@@ -19,15 +19,10 @@ class Leitor {
     void Descomprimir();
 
     Leitor(string entrada, string saida);
+    ~Leitor();
     
-}
+};
 
-// # Cab_Folhas
-// -> Quantidade de Folhas
-// -> Quantidade de Palavras
-// -> Folha("Palavra","Codigo")
-// # fim Cab_Folhas
-// Arquivo Compactado
 using namespace std;
 
 void compress(string filename, bool byWord);

@@ -2,16 +2,19 @@
 #include "huffman.hpp"
 
 Leitor::Leitor(string entrada, string saida) {
+    cout << "testando\n";
     this->entrada = new ifstream(entrada, ios::binary);
     this->saida = new ofstream(saida);
     this->entrada->read(reinterpret_cast<char*>(&qtdFolhas), sizeof(qtdFolhas));
+    cout << this->qtdFolhas << endl;
     this->entrada->read(reinterpret_cast<char*>(&qtdPalavras), sizeof(qtdPalavras));
+    cout << this->qtdPalavras << endl;
 
-    void montarArvore();
+    montarArvore();
 }
 
 void Leitor::montarArvore() {
-    vecor<pair<string, int>> listaPalavras;
+    vector<pair<string, int>> listaPalavras;
     string palavra;
     int tamanho;
     int frequencia;
@@ -20,6 +23,7 @@ void Leitor::montarArvore() {
         palavra.resize(tamanho);
         entrada->read((&palavra[0]), tamanho);
         entrada->read(reinterpret_cast<char*>(&frequencia), sizeof(frequencia));
+        cout << palavra << " " << frequencia << endl;
         listaPalavras.push_back(make_pair(palavra, frequencia));
     }
 
@@ -47,7 +51,7 @@ void Leitor::Descomprimir() {
         }
         bucket = bucket << 1; n--;
 
-        if(ponteiro->leaf()) {
+        if(ponteiro->isLeaf()) {
             *saida << ponteiro->token;
             ponteiro = Arvore->root;
         }
@@ -55,6 +59,8 @@ void Leitor::Descomprimir() {
 }
 
 Leitor::~Leitor() {
+    cout << "Acho q sim";
+}
 
 static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
     string token = symbol.first;
@@ -66,8 +72,8 @@ static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
     outFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
     pos += sizeof(int);
 
-    outFile.write(reinterpret_cast<char*>(&token), sizeof(token));
-    pos += sizeof(token);
+    outFile.write(token.c_str(), token.length());
+    pos += token.length();
 
     outFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
     pos += sizeof(int);
@@ -93,7 +99,7 @@ void compress(string filename, bool byWord){
     inFile.close();
 
     // DEBUG
-    ht.showTree();
+    // ht.showTree();
 
     
     ofstream outFile(filename+".bin", ios::binary);
@@ -107,8 +113,8 @@ void compress(string filename, bool byWord){
 
     writeHeader(outFile, ht, pos);
 
-    for(pair symbol : ht.symbols)  
-        writeSymbol(outFile, symbol, pos);
+    for(pair<string, int> symbol : ht.symbols)  
+       writeSymbol(outFile, symbol, pos);
     
-    //outFile.close();
+    outFile.close();
 }
