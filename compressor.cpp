@@ -1,150 +1,168 @@
 #include "compressor.hpp"
 #include <chrono>
 
-static vector<Symbol> getSymbols(ifstream& inFile, int leafCount){
-    vector<Symbol> symbols;
-    string symbol;
-    int size;
-    int frequency;
-    for(int i = 0; i < leafCount ; i++) {
-        inFile.read(reinterpret_cast<char*>(&size), sizeof(size));
-        symbol.resize(size);
-        inFile.read((&symbol[0]), size);
-        inFile.read(reinterpret_cast<char*>(&frequency), sizeof(frequency));
-        symbols.push_back(make_pair(symbol, frequency));
-    }
-
-    return symbols;
-}
-
-Compressor::Compressor(string decompressedFilename, bool byWord) {
-    this->decompressedFilename = decompressedFilename + ".txt";
-    this->compressedFilename = decompressedFilename + "_binary.bin";
-    this->outputFilename = decompressedFilename + "_output.txt";
+Compressor::Compressor(string originalFilename, bool byWord) {
+    this->originalFilename = originalFilename + ".txt";
+    this->compressedFilename = originalFilename + "_binary.bin";
+    this->outputFilename = originalFilename + "_output.txt";
     this->byWord = byWord;
 }
 
-static void writeSymbols(ofstream& outFile, vector<Symbol> symbols){
+static void writeSymbols(ofstream& compressedFile, vector<Symbol> symbols){
     for(Symbol symbol : symbols){
         string token = symbol.first;
         int tokenLen = symbol.first.length();
         int frequency = symbol.second;
 
-        outFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
-        outFile.write(token.c_str(), tokenLen);
-        outFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
+        compressedFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
+
+        compressedFile.write(token.c_str(), tokenLen);
+
+        compressedFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
     }
 }
 
-static void writeBuffer(ofstream& outFile, char& buffer, int& bitCount, string code){
+static void writeBitBuffer(ofstream& compressedFile, char& buffer, int& bitCount, string code){
     for (char c : code) {
         buffer = (buffer << 1) | (c == '1' ? 1 : 0);
         bitCount++;
         if (bitCount == 8) {
-            outFile.write(reinterpret_cast<const char*>(&buffer), 1);
+            compressedFile.write(reinterpret_cast<const char*>(&buffer), 1);
             buffer = 0;
             bitCount = 0;
         }
     }
 }
 
-void Compressor::compress(){
-    auto start = chrono::steady_clock::now();
-
-    ifstream inFile(decompressedFilename);
-    HuffmanTree ht(inFile, byWord);
-    
-    ofstream outFile(compressedFilename, ios::binary);
-
-    outFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
-    outFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
-
-    writeSymbols(outFile, ht.symbols);
-
-    inFile.clear();
-    inFile.seekg(0, ios::beg);
+static void writeCompressedMessage(ifstream& originalFile, ofstream& compressedFile, unordered_map<string, string> codes, bool byWord){
+    originalFile.clear();
+    originalFile.seekg(0, ios::beg);
 
     char buffer = 0;
     int bitCount = 0;
     char c;
     if (!byWord) {
-        while (inFile.get(c)) {
-            string code = ht.huffmanCodes[string(1, c)];
-            writeBuffer(outFile, buffer, bitCount, code);
+        while (originalFile.get(c)) {
+            string code = codes[string(1, c)];
+            writeBitBuffer(compressedFile, buffer, bitCount, code);
         }
     } else {
         string word = "";
-        while (inFile.get(c)) {
+        while (originalFile.get(c)) {
             if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
                 if (!word.empty()) {
-                    string code = ht.huffmanCodes[word];
-                    writeBuffer(outFile, buffer, bitCount, code);
+                    string code = codes[word];
+                    writeBitBuffer(compressedFile, buffer, bitCount, code);
                     word = "";
                 }
-                string spaceCode = ht.huffmanCodes[string(1, c)];
-                writeBuffer(outFile, buffer, bitCount, spaceCode);
+                string spaceCode = codes[string(1, c)];
+                writeBitBuffer(compressedFile, buffer, bitCount, spaceCode);
                 
             } else word += c;
         }
         if (!word.empty()) {
-            string code = ht.huffmanCodes[word];
-            writeBuffer(outFile, buffer, bitCount, code);
+            string code = codes[word];
+            writeBitBuffer(compressedFile, buffer, bitCount, code);
         }
     }
 
     if (bitCount > 0) {
         buffer = buffer << (8 - bitCount);
-        outFile.write(reinterpret_cast<const char*>(&buffer), 1);
-    }    
-    //outFile.close();
-
-    auto end = chrono::steady_clock::now();
-
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-
-    cout << "Tempo de compactacao de arquivo " << decompressedFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count() << "ms\n";
-
+        compressedFile.write(reinterpret_cast<const char*>(&buffer), 1);
+    } 
 }
 
-void Compressor::decompress(){
-    auto start = chrono::steady_clock::now();
+void Compressor::compress(){
+    // auto start = chrono::steady_clock::now();
 
-    ifstream compressed(compressedFilename, ios::binary);
-    int leafCount, tokenCount;
-    compressed.read(reinterpret_cast<char*>(&leafCount), sizeof(int));
-    compressed.read(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    ifstream originalFile(originalFilename);
+    HuffmanTree ht(originalFile, byWord);
     
-    //HuffmanTree ht = getTree(compressed, leafCount);
-    vector<Symbol> symbols = getSymbols(compressed, leafCount);
-    HuffmanTree ht(symbols);
+    ofstream compressedFile(compressedFilename, ios::binary);
 
-    ofstream decompressed(outputFilename);
+    compressedFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
+    compressedFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
 
+    writeSymbols(compressedFile, ht.symbols);
+    writeCompressedMessage(originalFile, compressedFile, ht.huffmanCodes, byWord);
+
+    originalFile.close();
+    compressedFile.close();
+
+    // auto end = chrono::steady_clock::now();
+    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    // cout << "Tempo de compactacao de arquivo " << originalFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count() << "ms\n";
+}
+
+static vector<Symbol> getSymbols(ifstream& compressedFile, int leafCount){
+    vector<Symbol> symbols;
+    string symbol;
+    int size, frequency;
+    for(int i = 0; i < leafCount ; i++) {
+        compressedFile.read(reinterpret_cast<char*>(&size), sizeof(size));
+        symbol.resize(size);
+
+        compressedFile.read((&symbol[0]), size);
+
+        compressedFile.read(reinterpret_cast<char*>(&frequency), sizeof(frequency));
+
+        symbols.push_back(make_pair(symbol, frequency));
+    }
+
+    return symbols;
+}
+
+static void writeDecompressedMessage(ifstream& compressedFile, ofstream& decompressedFile, int tokenCount, Node* htRoot){
     char buffer;
     int bitCount = 0;
     int foundTokens = 0;
-    Node* currentNode = ht.root;
+    Node* currentNode = htRoot;
 
     while(foundTokens < tokenCount) {
         if(bitCount == 0) {
-            buffer = compressed.get();
-            if (compressed.eof()) {cerr << "EOF!" << endl; break;}
+            buffer = compressedFile.get();
+            if (compressedFile.eof()) {cerr << "EOF!" << endl; break;}
             bitCount = 8;
         }
 
         currentNode = (buffer & 0x80) ? currentNode->right : currentNode->left;
-        buffer = buffer << 1; bitCount--;
+
+        buffer = buffer << 1; 
+        bitCount--;
 
         if(currentNode->isLeaf()) {
-            decompressed << currentNode->token;
-            currentNode = ht.root;
+            decompressedFile << currentNode->token;
+            currentNode = htRoot;
             foundTokens++;
         }
     }
+}
 
-    auto end = chrono::steady_clock::now();
+void Compressor::decompress(){
+    // auto start = chrono::steady_clock::now();
 
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    ifstream compressedFile(compressedFilename, ios::binary);
 
-    cout << "Tempo de descompactacao de arquivo " << compressedFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count()  << "ms\n";
+    int leafCount, tokenCount;
+
+    compressedFile.read(reinterpret_cast<char*>(&leafCount), sizeof(int));
+    compressedFile.read(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    
+    vector<Symbol> symbols = getSymbols(compressedFile, leafCount);
+
+    HuffmanTree ht(symbols);
+
+    Node* htRoot = ht.root;
+
+    ofstream decompressedFile(outputFilename);
+
+    writeDecompressedMessage(compressedFile, decompressedFile, tokenCount, htRoot);
+
+    compressedFile.close();
+    decompressedFile.close();
+    
+    // auto end = chrono::steady_clock::now();
+    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    // cout << "Tempo de descompactacao de arquivo " << compressedFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count()  << "ms\n";
+
 }

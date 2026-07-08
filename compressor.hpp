@@ -18,11 +18,11 @@ class Compressor{
     
     public:
     
-    string decompressedFilename;
+    string originalFilename;
     string compressedFilename;
     string outputFilename;
 
-    Compressor(string decompressedFilename, bool byWord);
+    Compressor(string originalFilename, bool byWord);
 
     void decompress();
     void compress();
