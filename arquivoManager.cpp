@@ -1,86 +1,68 @@
 #include "arquivoManager.hpp"
 #include "huffman.hpp"
 
-Leitor::Leitor(string original, string comprimido) {
-    this->original = new ifstream(original, ios::binary);
-    if(!(*this->original).is_open()){
-        cerr << "Arquivo de texto " << original << " não pode ser aberto";
-        return;
+static HuffmanTree getTree(ifstream& inFile, int leafCount){
+    vector<pair<string, int>> symbols;
+    string symbol;
+    int size;
+    int frequency;
+    for(int i = 0; i < leafCount ; i++) {
+        inFile.read(reinterpret_cast<char*>(&size), sizeof(size));
+        symbol.resize(size);
+        inFile.read((&symbol[0]), size);
+        inFile.read(reinterpret_cast<char*>(&frequency), sizeof(frequency));
+        symbols.push_back(make_pair(symbol, frequency));
     }
 
-    this->comprimido = new ofstream(comprimido);
-    if(!(*this->comprimido)){
-        cerr << "Nao foi possivel criar o arquivo " << comprimido << " para compressao.\n";
-        return;
-    }
-
-    this->original->read(reinterpret_cast<char*>(&qtdFolhas), sizeof(qtdFolhas));
-    this->original->read(reinterpret_cast<char*>(&qtdPalavras), sizeof(qtdPalavras));
-
-    void montarArvore();
+    return HuffmanTree(symbols);
 }
 
-void Leitor::montarArvore() {
-    vector<pair<string, int>> listaPalavras;
-    string palavra;
-    int tamanho;
-    int frequencia;
-    for(int i = 0; i < qtdFolhas ; i++) {
-        original->read(reinterpret_cast<char*>(&tamanho), sizeof(tamanho));
-        palavra.resize(tamanho);
-        original->read((&palavra[0]), tamanho);
-        original->read(reinterpret_cast<char*>(&frequencia), sizeof(frequencia));
-        listaPalavras.push_back(make_pair(palavra, frequencia));
-    }
+void Compressor::decompress(){
+    ifstream compressed(compressedFilename, ios::binary);
+    int leafCount, tokenCount;
 
-    this->Arvore = new HuffmanTree(listaPalavras);
-}
+    compressed.read(reinterpret_cast<char*>(&leafCount), sizeof(int));
+    compressed.read(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    
+    HuffmanTree ht = getTree(compressed, leafCount);
 
-void Leitor::descomprimir() {
-    char bucket;
-    int n = 0;
-    Node* ponteiro = Arvore->root;
-    for(int i = 0; i < qtdPalavras; i++) {
+    ofstream decompressed(decompressedFilename);
 
-        if(n == 0) {
-            bucket = original->get();
-            if (original->eof()) {cerr << "EOF!" << endl; break;}
-            n = 8;
+    char buffer;
+    int bitCount = 0;
+    Node* currentNode = ht.root;
+    for(int i = 0; i < tokenCount; i++) {
+
+        if(bitCount == 0) {
+            buffer = compressed.get();
+            if (compressed.eof()) {cerr << "EOF!" << endl; break;}
+            bitCount = 8;
         }
         
-        if(bucket & 0x80) {
-            ponteiro = ponteiro->right;
+        if(buffer & 0x80) {
+            currentNode = currentNode->right;
         }
 
         else {
-            ponteiro = ponteiro->left;
+            currentNode = currentNode->left;
         }
-        bucket = bucket << 1; n--;
+        buffer = buffer << 1; bitCount--;
 
-        if(ponteiro->isLeaf()) {
-            *comprimido << ponteiro->token;
-            ponteiro = Arvore->root;
+        if(currentNode->isLeaf()) {
+            decompressed << currentNode->token;
+            currentNode = ht.root;
         }
     }
 }
 
-//Leitor::~Leitor()
-
-static void writeSymbol(ofstream& outFile, pair<string, int> symbol, int& pos){
+static void writeSymbol(ofstream& outFile, pair<string, int> symbol){
     string token = symbol.first;
-    int tokenLen = token.length();
+    int tokenLen = symbol.first.length();
     int frequency = symbol.second;
 
-    outFile.seekp(pos, ios::beg);
-
     outFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
-    pos += sizeof(int);
-
-    outFile.write(reinterpret_cast<char*>(&token), sizeof(token));
-    pos += sizeof(token);
-
+    outFile.write(token.c_str(), tokenLen);
     outFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
-    pos += sizeof(int);
 }
 
 static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
@@ -91,22 +73,55 @@ static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
     pos+=sizeof(int);
 }
 
-void Leitor::comprimir(bool byWord){
+static void writeBuffer(ofstream& outFile, char& buffer, int& bitCount, string code){
+    for (char c : code) {
+        buffer = (buffer << 1) | (c == '1' ? 1 : 0);
+        bitCount++;
+        if (bitCount == 8) {
+            outFile.write(reinterpret_cast<const char*>(&buffer), 1);
+            buffer = 0;
+            bitCount = 0;
+        }
+    }
+}
+
+void Compressor::compress(){
+    ifstream inFile(decompressedFilename);
+    HuffmanTree ht(inFile, byWord);
+
+    ht.showTree();// DEBUG
     
+    ofstream outFile(compressedFilename, ios::binary);
 
-    HuffmanTree ht(*this->original, byWord);
-
-    // DEBUG
-    ht.showTree();
-    
-    int pos = 0;
-
-    writeHeader(*this->comprimido, ht, pos);
+    outFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
+    outFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
 
     for(pair symbol : ht.symbols)  
-        writeSymbol(*this->comprimido, symbol, pos);
+        writeSymbol(outFile, symbol);
 
-    // escerever mensagem codificada
-    
+    inFile.clear();
+    inFile.seekg(0, ios::beg);
+
+    char buffer = 0;
+    int bitCount = 0;
+    if (!byWord) {
+        char c;
+        while (inFile.get(c)) {
+            string code = ht.huffmanCodes[string(1, c)];
+            writeBuffer(outFile, buffer, bitCount, code);
+            
+        }
+    } else {
+        string word;
+        while (inFile >> word) {
+            string code = ht.huffmanCodes[word];
+            writeBuffer(outFile, buffer, bitCount, code);
+        }
+    }
+
+    if (bitCount > 0) {
+        buffer = buffer << (8 - bitCount);
+        outFile.write(reinterpret_cast<const char*>(&buffer), 1);
+    }    
     //outFile.close();
 }
