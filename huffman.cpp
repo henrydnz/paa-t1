@@ -20,7 +20,7 @@ HuffmanTree::HuffmanTree(ifstream& file, bool byWord) {
 
 
 // constroi arvore a partir de um vector pair (pra decodificacao)
-HuffmanTree::HuffmanTree(vector<pair<string, int>> symbols) : symbols(symbols) {
+HuffmanTree::HuffmanTree(vector<Symbol> symbols) : symbols(symbols) {
     leafCount = symbols.size();
     tokenCount = 0;
     for(auto sym : symbols) 
@@ -61,12 +61,7 @@ void HuffmanTree::buildSymbolTable(ifstream& file, bool byWord){
 
 // constroi a arvore a partir de uma fila ordenada fila de nos
 void HuffmanTree::buildTree(){
-    struct CompareNode {
-        bool operator()(Node* n1, Node* n2){
-            return n1->count > n2->count; 
-        }
-    };
-    priority_queue<Node*, vector<Node*>, CompareNode> nodeQueue;
+    NodeQueue nodeQueue;
 
     for(auto sym : symbols)
         nodeQueue.push(new Node(sym.first, sym.second));
@@ -96,7 +91,7 @@ void HuffmanTree::generateCodes(Node* node, string currentCode) {
 
 void HuffmanTree::showSymbols(){
     cout << "showing symbols and frequencies for the current tree" << endl;
-    for(pair<string, int> symbol : symbols){
+    for(Symbol symbol : symbols){
         cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
     }
 }

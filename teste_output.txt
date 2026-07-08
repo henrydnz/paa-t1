@@ -1,0 +1,5 @@
+palavra 
+frase palavra
+casa
+mundo
+palavra frase casa

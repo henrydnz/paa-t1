@@ -16,7 +16,10 @@
 
 using namespace std;
 
-// estrutura de no da arvore
+/**
+ * @class Node
+ * @brief Estrutura do nó da árvore binária de Huffman.
+ */
 class Node {
     public:
 
@@ -30,11 +33,22 @@ class Node {
     Node(int count, Node* left, Node* right) : token(""), count(count), left(left), right(right) {}
     // criar no folha
     Node(string token, int count) : token(token), count(count), left(nullptr), right(nullptr) {}
-
+    
     bool operator<(const Node& other) const { return count > other.count; }
 
     bool isLeaf() { return !left && !right; }
 };
+
+/**
+ * @struct NodePointerComparator
+ * @brief Estrutura para comparação de ponteiros de no, usada na priority_queue<>
+ */
+struct NodePointerComparator {
+    bool operator()(Node* n1, Node* n2){ return (*n1) < (*n2); }
+};
+
+typedef priority_queue<Node*, vector<Node*>, NodePointerComparator> NodeQueue;
+typedef pair<string, int> Symbol;
 
 // estrutura da arvore binaria de huffman
 class HuffmanTree{    
@@ -48,7 +62,7 @@ class HuffmanTree{
 
     Node* root = nullptr;
 
-    vector<pair<string, int>> symbols;
+    vector<Symbol> symbols;
     int tokenCount; // numero de tokens no arquivo .txt
     int leafCount;  // numero de folhas na arvore
 
