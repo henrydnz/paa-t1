@@ -5,6 +5,8 @@
 #include <string>
 #include "huffman.hpp"
 
+using namespace std;
+
 class Leitor {
     private:
         int qtdPalavras;
@@ -16,7 +18,8 @@ class Leitor {
         void montarArvore();
     public:
 
-    void Descomprimir();
+    void descomprimir();
+    void comprimir(bool byWord);
 
     Leitor(string entrada, string saida);
     ~Leitor();
@@ -25,4 +28,4 @@ class Leitor {
 
 using namespace std;
 
-void compress(string filename, bool byWord);
+

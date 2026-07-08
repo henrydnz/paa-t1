@@ -12,7 +12,7 @@ int main() {
     Leitor leitor("texto.bin", "descomprimido.txt");
     cout << "=== DEPOIS DO CONSTRUTOR ===" << endl;
     
-    leitor.Descomprimir();
+    leitor.descomprimir();
     cout << "=== DEPOIS DA DESCOMPRESSAO ===" << endl;
     
     return 0;

@@ -30,7 +30,7 @@ void Leitor::montarArvore() {
     this->Arvore = new HuffmanTree(listaPalavras);
 }
 
-void Leitor::Descomprimir() {
+void Leitor::descomprimir() {
     char bucket;
     int n = 0;
     Node* ponteiro = Arvore->root;
@@ -87,34 +87,20 @@ static void writeHeader(ofstream& outFile, HuffmanTree ht, int& pos){
     pos+=sizeof(int);
 }
 
-void compress(string filename, bool byWord){
-    ifstream inFile(filename+".txt");
+void Leitor::comprimir(bool byWord){
+    
 
-    if(!inFile.is_open()){
-        cerr << "Arquivo de texto " << filename+".txt" << " não pode ser aberto";
-        return;
-    }
-
-    HuffmanTree ht(inFile, byWord);
-    inFile.close();
+    HuffmanTree ht(*this->entrada, byWord);
 
     // DEBUG
-    // ht.showTree();
-
-    
-    ofstream outFile(filename+".bin", ios::binary);
-
-    if(!outFile){
-        cerr << "Nao foi possivel criar o arquivo " << filename << " para compressao.\n";
-        return;
-    }
+    ht.showTree();
     
     int pos = 0;
 
-    writeHeader(outFile, ht, pos);
+    writeHeader(*this->saida, ht, pos);
 
-    for(pair<string, int> symbol : ht.symbols)  
-       writeSymbol(outFile, symbol, pos);
+    // for(pair<string, int> symbol : ht.symbols)  
+    //    writeSymbol(outFile, symbol, pos);
     
-    outFile.close();
+    // outFile.close();
 }
