@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
+#include <filesystem>
 
 #include "huffman.hpp"
 
@@ -49,7 +51,7 @@ class Compressor{
      * Hash de códigos de Huffman e gravar o cabeçalho (quantidade de folhas e tokens), e a 
      * segunda para gravar a cadeia crua de bits correspondente à mensagem codificada.
      */
-    void compress();
+    int compress();
 
     /**
      * @brief Descomprime o arquivo binário gerando um arquivo de texto.
@@ -58,5 +60,5 @@ class Compressor{
      * e reconstruir a árvore de Huffman idêntica à da compressão. Em seguida, 
      * navega a árvore bit a bit decodificando a mensagem e gravando os tokens recuperados.
      */
-    void decompress();
+    int decompress();
 };

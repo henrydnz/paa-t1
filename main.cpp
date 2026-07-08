@@ -1,5 +1,6 @@
 #include "huffman.hpp"
 #include "compressor.hpp"
+#include "util.hpp"
 
 void Comp_Desc() {
     string inputFile;
@@ -18,11 +19,11 @@ void Comp_Desc() {
         }
     } while (op != 1 && op != 2);
 
+    clear();
+
     Compressor C(inputFile, isWord);
-    C.compress();
-    cout << "Arquivo Comprimido!" << endl;
-    C.decompress();
-    cout << "Arquivo Descomprimido!" << endl;
+    int error = C.compress();
+    if(!error) C.decompress();
 }
 
 void Comp() {
@@ -42,9 +43,10 @@ void Comp() {
         }
     } while (op != 1 && op != 2);
 
+    clear();
+
     Compressor C(inputFile, isWord);
     C.compress();
-    cout << "Arquivo Comprimido!" << endl;
 }
 
 void Desc() {
@@ -52,20 +54,16 @@ void Desc() {
     cout << "Digite o Nome do Arquivo (Sem \".bin\")" << endl;
     cin >> inputFile;
 
+    clear();
+
     Compressor C(inputFile, false);
     C.compressedFilename = inputFile + ".bin";
     C.decompress();
-    cout << "Arquivo Descomprimido!" << endl;
 }
 
 int menuCompressor() {
     int op = -1;
-    cout << "==================== Menu ====================" << endl
-         << "1 - Comprimir e Descomprimir um Arquivo" << endl
-         << "2 - Comprimir um Arquivo" << endl
-         << "3 - Descomprimir um Arquivo" << endl
-         << "0 - Fechar" << endl
-         << "==================== ==== ====================" << endl;
+    showMenu();
     cin >> op;
 
     switch(op) {

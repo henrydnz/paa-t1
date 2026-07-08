@@ -1,5 +1,4 @@
 #include "compressor.hpp"
-#include <chrono>
 
 Compressor::Compressor(string originalFilename, bool byWord) {
     this->originalFilename = originalFilename + ".txt";
@@ -72,26 +71,42 @@ void Compressor::writeCompressedMessage(ifstream& originalFile, ofstream& compre
     } 
 }
 
-void Compressor::compress(){
-    // auto start = chrono::steady_clock::now();
+
+int Compressor::compress(){
+    auto start = chrono::steady_clock::now();
 
     ifstream originalFile(originalFilename);
+    if(!originalFile.is_open()){
+        cerr << "Erro ao abrir o arquivo original " << originalFilename 
+            << ".\nCertifique-se de que o arquivo esta localizado na pasta raiz\ne que o nome esta correto.\n";
+        return 1;
+    }
+
+    ofstream compressedFile(compressedFilename, ios::binary);
+    if(!compressedFile.is_open()){
+        cerr << "Erro ao criar o arquivo " << compressedFilename << " para a compressao\n";
+        return 1;
+    }
+
     HuffmanTree ht(originalFile, byWord);
     
-    ofstream compressedFile(compressedFilename, ios::binary);
-
     compressedFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
     compressedFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
 
     writeSymbols(compressedFile, ht.symbols);
     writeCompressedMessage(originalFile, compressedFile, ht.huffmanCodes);
-
+    
+    auto end = chrono::steady_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    int time_elapsed = duration.count();
+    
+    cout << "Arquivo " << originalFilename << " foi comprimido com sucesso! (Tempo:" << time_elapsed << "ms)\n";
+    cout << "Output: " << compressedFilename << " (Tamanho: " << static_cast<double>(compressedFile.tellp())/1024.0 << "kb)" << endl << endl;
+    
     originalFile.close();
     compressedFile.close();
 
-    // auto end = chrono::steady_clock::now();
-    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    // cout << "Tempo de compactacao de arquivo " << originalFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count() << "ms\n";
+    return 0;
 }
 
 void Compressor::getSymbols(ifstream& compressedFile){
@@ -109,7 +124,7 @@ void Compressor::getSymbols(ifstream& compressedFile){
     }
 }
 
-void Compressor::writeDecompressedMessage(ifstream& compressedFile, ofstream& decompressedFile){
+void Compressor::writeDecompressedMessage(ifstream& compressedFile, ofstream& outputFile){
     char buffer;
     int bitCount = 0;
     int foundTokens = 0;
@@ -128,17 +143,28 @@ void Compressor::writeDecompressedMessage(ifstream& compressedFile, ofstream& de
         bitCount--;
 
         if(currentNode->isLeaf()) {
-            decompressedFile << currentNode->token;
+            outputFile << currentNode->token;
             currentNode = treeRoot;
             foundTokens++;
         }
     }
 }
 
-void Compressor::decompress(){
-    // auto start = chrono::steady_clock::now();
+int Compressor::decompress(){
+    auto start = chrono::steady_clock::now();
 
     ifstream compressedFile(compressedFilename, ios::binary);
+    if(!compressedFile.is_open()){
+        cerr << "Erro ao abrir o arquivo comprimido " << compressedFilename
+            << ".\nCertifique-se de que o arquivo esta localizado na pasta raiz\ne que o nome esta correto.\n";
+        return 1;
+    }
+
+    ofstream outputFile(outputFilename);
+    if(!outputFile.is_open()){
+        cerr << "Erro ao criar o arquivo de saida " << outputFilename << ".\n";
+        return 1;
+    }
 
     compressedFile.read(reinterpret_cast<char*>(&this->leafCount), sizeof(int));
     compressedFile.read(reinterpret_cast<char*>(&this->tokenCount), sizeof(int));
@@ -146,18 +172,18 @@ void Compressor::decompress(){
     getSymbols(compressedFile);
 
     HuffmanTree ht(symbols);
-
     this->treeRoot = ht.root;
 
-    ofstream decompressedFile(outputFilename);
+    writeDecompressedMessage(compressedFile, outputFile);
 
-    writeDecompressedMessage(compressedFile, decompressedFile);
+    auto end = chrono::steady_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    int time_elapsed = duration.count();
 
+    cout << "Arquivo " << compressedFilename << " foi descomprimido com sucesso! (Tempo:" << time_elapsed << "ms)\n";
+    cout << "Output: " << outputFilename << " (Tamanho: " << static_cast<double>(outputFile.tellp())/1024.0 << "kb)" << endl << endl;
     compressedFile.close();
-    decompressedFile.close();
-    
-    // auto end = chrono::steady_clock::now();
-    // auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    // cout << "Tempo de descompactacao de arquivo " << compressedFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count()  << "ms\n";
+    outputFile.close();
 
+    return 0;
 }
