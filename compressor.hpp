@@ -21,8 +21,14 @@ class Compressor{
 
     vector<Symbol> symbols;
 
+    // Escreve no arquivo binario (compressedFile) uma cadeia crua de bits contendo 
+    // a mensagem do arquivo original (original file) codificada em Huffman
     void writeCompressedMessage(ifstream& originalFile, ofstream& compressedFile, HuffmanCodes codes);
+    // Escreve no arquivo txt (deocompressedFile) a decodificacao da cadaeia de bits 
+    // Huffman no arquivo binario (compressedFile)
     void writeDecompressedMessage(ifstream& compressedFile, ofstream& decompressedFile);
+    // le o inicio do arquivo binario (compressedFile) contendo a lista de relacao de
+    // simbolos e frequencias
     void getSymbols(ifstream& compressedFile);
     
     public:
