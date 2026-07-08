@@ -20,8 +20,7 @@ class Compressor{
 
     public:
 
-    Compressor(string decompressedFilename, string compressedFilename, string outputFilename, bool byWord) : 
-        decompressedFilename(decompressedFilename), compressedFilename(compressedFilename), outputFilename(outputFilename), byWord(byWord) {}
+    Compressor(string decompressedFilename, bool byWord);
 
     void decompress();
     void compress();

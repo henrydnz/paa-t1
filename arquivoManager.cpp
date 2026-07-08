@@ -17,10 +17,16 @@ static HuffmanTree getTree(ifstream& inFile, int leafCount){
     return HuffmanTree(symbols);
 }
 
+Compressor::Compressor(string decompressedFilename, bool byWord) {
+    this->decompressedFilename = decompressedFilename + ".txt";
+    this->compressedFilename = decompressedFilename + "_binary.bin";
+    this->outputFilename = decompressedFilename + "_output.txt";
+    this->byWord = byWord;
+}
+
 void Compressor::decompress(){
     ifstream compressed(compressedFilename, ios::binary);
     int leafCount, tokenCount;
-
     compressed.read(reinterpret_cast<char*>(&leafCount), sizeof(int));
     compressed.read(reinterpret_cast<char*>(&tokenCount), sizeof(int));
     
