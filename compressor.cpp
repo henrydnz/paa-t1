@@ -34,7 +34,7 @@ static void writeBitBuffer(ofstream& compressedFile, char& buffer, int& bitCount
     }
 }
 
-static void writeCompressedMessage(ifstream& originalFile, ofstream& compressedFile, unordered_map<string, string> codes, bool byWord){
+void Compressor::writeCompressedMessage(ifstream& originalFile, ofstream& compressedFile, HuffmanCodes codes){
     originalFile.clear();
     originalFile.seekg(0, ios::beg);
 
@@ -84,7 +84,7 @@ void Compressor::compress(){
     compressedFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
 
     writeSymbols(compressedFile, ht.symbols);
-    writeCompressedMessage(originalFile, compressedFile, ht.huffmanCodes, byWord);
+    writeCompressedMessage(originalFile, compressedFile, ht.huffmanCodes);
 
     originalFile.close();
     compressedFile.close();
@@ -94,11 +94,10 @@ void Compressor::compress(){
     // cout << "Tempo de compactacao de arquivo " << originalFilename << (byWord ? " por palavra: " : " por letra: ") << duration.count() << "ms\n";
 }
 
-static vector<Symbol> getSymbols(ifstream& compressedFile, int leafCount){
-    vector<Symbol> symbols;
+void Compressor::getSymbols(ifstream& compressedFile){
     string symbol;
     int size, frequency;
-    for(int i = 0; i < leafCount ; i++) {
+    for(int i = 0; i < this->leafCount ; i++) {
         compressedFile.read(reinterpret_cast<char*>(&size), sizeof(size));
         symbol.resize(size);
 
@@ -108,17 +107,15 @@ static vector<Symbol> getSymbols(ifstream& compressedFile, int leafCount){
 
         symbols.push_back(make_pair(symbol, frequency));
     }
-
-    return symbols;
 }
 
-static void writeDecompressedMessage(ifstream& compressedFile, ofstream& decompressedFile, int tokenCount, Node* htRoot){
+void Compressor::writeDecompressedMessage(ifstream& compressedFile, ofstream& decompressedFile){
     char buffer;
     int bitCount = 0;
     int foundTokens = 0;
-    Node* currentNode = htRoot;
+    Node* currentNode = treeRoot;
 
-    while(foundTokens < tokenCount) {
+    while(foundTokens < this->tokenCount) {
         if(bitCount == 0) {
             buffer = compressedFile.get();
             if (compressedFile.eof()) {cerr << "EOF!" << endl; break;}
@@ -132,7 +129,7 @@ static void writeDecompressedMessage(ifstream& compressedFile, ofstream& decompr
 
         if(currentNode->isLeaf()) {
             decompressedFile << currentNode->token;
-            currentNode = htRoot;
+            currentNode = treeRoot;
             foundTokens++;
         }
     }
@@ -143,20 +140,18 @@ void Compressor::decompress(){
 
     ifstream compressedFile(compressedFilename, ios::binary);
 
-    int leafCount, tokenCount;
-
-    compressedFile.read(reinterpret_cast<char*>(&leafCount), sizeof(int));
-    compressedFile.read(reinterpret_cast<char*>(&tokenCount), sizeof(int));
+    compressedFile.read(reinterpret_cast<char*>(&this->leafCount), sizeof(int));
+    compressedFile.read(reinterpret_cast<char*>(&this->tokenCount), sizeof(int));
     
-    vector<Symbol> symbols = getSymbols(compressedFile, leafCount);
+    getSymbols(compressedFile);
 
     HuffmanTree ht(symbols);
 
-    Node* htRoot = ht.root;
+    this->treeRoot = ht.root;
 
     ofstream decompressedFile(outputFilename);
 
-    writeDecompressedMessage(compressedFile, decompressedFile, tokenCount, htRoot);
+    writeDecompressedMessage(compressedFile, decompressedFile);
 
     compressedFile.close();
     decompressedFile.close();

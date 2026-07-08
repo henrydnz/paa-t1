@@ -1,9 +1,3 @@
-/**
- * @file huffman.hpp
- * @brief Estruturas de dados para a criação e manipulação da Árvore de Huffman.
- * @authors Henrique Diniz da Costa e Noam Daniel Wandscheer Brecher
- */
-
 #pragma once
 
 #include <iostream>
@@ -49,14 +43,27 @@ struct NodePointerComparator {
 
 typedef priority_queue<Node*, vector<Node*>, NodePointerComparator> NodeQueue;
 typedef pair<string, int> Symbol;
+typedef unordered_map<string, string> HuffmanCodes;
 
-// estrutura da arvore binaria de huffman
+/**
+ * @class HuffmanTree
+ * @brief Classe responsável pela construção e gestão da Árvore de Huffman.
+ * 
+ * A árvore é construída a partir de uma lista de relação transformada em nós-folha,
+ * processada por uma fila de prioridade (priority_queue) baseada em frequência.
+ * A partir da árvore, gera-se uma tabela Hash (unordered_map) contendo o código binário de cada token.
+ */
 class HuffmanTree{    
     private:
 
+    // adiciona um simbolo na tabela
     void addSymbol(string symbol);
+    // constroi tabela de simbolos
     void buildSymbolTable(ifstream& file, bool byWord);
+    // constroi arvore com base na tabela de simbolos
     void buildTree();
+    // gera hash de codigos Huffman recursivamente
+    void generateCodes(Node* node, string currentCode);
 
     public:
 
@@ -66,17 +73,21 @@ class HuffmanTree{
     int tokenCount; // numero de tokens no arquivo .txt
     int leafCount;  // numero de folhas na arvore
 
-    unordered_map<string, string> huffmanCodes;
+    HuffmanCodes huffmanCodes;
 
+    /**
+     * @brief Constrói a árvore de Huffman para COMPRESSÃO lendo o arquivo original.
+     * @param file Arquivo original aberto em modo binário.
+     * @param byWord Se true, agrupa caracteres formando palavras; se false, lê caractere por caractere.
+     */
     HuffmanTree(ifstream& file, bool byWord);
-    HuffmanTree(vector<pair<string, int>> symbolTable);
+
+    /**
+     * @brief Constrói a árvore de Huffman para DESCOMPRESSÃO a partir de símbolos lidos do arquivo .bin.
+     * @param symbolTable Vetor de pares contendo o token e sua respectiva frequência.
+     */
+    HuffmanTree(vector<Symbol> symbolTable);
+
     ~HuffmanTree();
-
-    void generateCodes(Node* node, string currentCode);
-
-    // debug
-    void showSymbols();
-    void showCodes();
-    void showTree();
 };
 

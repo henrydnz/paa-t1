@@ -1,10 +1,5 @@
 #include "huffman.hpp"
 
-// === === HuffmanTree
-
-// === construtores
-
-// constroi arvore a partir do arquivo de texto (pra condificacao)
 HuffmanTree::HuffmanTree(ifstream& file, bool byWord) {
     buildSymbolTable(file, byWord);
 
@@ -18,8 +13,6 @@ HuffmanTree::HuffmanTree(ifstream& file, bool byWord) {
     generateCodes(root, "");
 }
 
-
-// constroi arvore a partir de um vector pair (pra decodificacao)
 HuffmanTree::HuffmanTree(vector<Symbol> symbols) : symbols(symbols) {
     leafCount = symbols.size();
     tokenCount = 0;
@@ -30,7 +23,16 @@ HuffmanTree::HuffmanTree(vector<Symbol> symbols) : symbols(symbols) {
     generateCodes(root, "");
 }
 
-// === Metodos
+static void freeNode(Node* node){
+    if(!node) return;
+
+    freeNode(node->left);
+    freeNode(node->right);
+
+    delete node;
+}
+HuffmanTree::~HuffmanTree(){ freeNode(root); }
+
 void HuffmanTree::addSymbol(string symbol){
     for(auto& sym : symbols){
         if(sym.first == symbol){
@@ -59,7 +61,6 @@ void HuffmanTree::buildSymbolTable(ifstream& file, bool byWord){
     }
 }
 
-// constroi a arvore a partir de uma fila ordenada fila de nos
 void HuffmanTree::buildTree(){
     NodeQueue nodeQueue;
 
@@ -76,7 +77,6 @@ void HuffmanTree::buildTree(){
     root = nodeQueue.top(); nodeQueue.pop();
 }
 
-// funcao recursiva pra construir a hash de token->codigoBin (em string)
 void HuffmanTree::generateCodes(Node* node, string currentCode) {
     if (!node) return;
 
@@ -88,52 +88,6 @@ void HuffmanTree::generateCodes(Node* node, string currentCode) {
     generateCodes(node->left, currentCode + "0");
     generateCodes(node->right, currentCode + "1");
 }
-
-void HuffmanTree::showSymbols(){
-    cout << "showing symbols and frequencies for the current tree" << endl;
-    for(Symbol symbol : symbols){
-        cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
-    }
-}
-
-void HuffmanTree::showCodes(){
-    cout << "showing huffman codes for the current tree" << endl;
-    for(auto symbol : huffmanCodes){
-        cout << "Symbol (" << symbol.first << ") : " << symbol.second << endl;
-    }
-}
-
-// funcao recursiva pra mostrar nos da arvore
-static void printNode(Node* node, const unordered_map<string, string>& huffmanCodes){
-    if(!node) return;
-
-    printNode(node->left,huffmanCodes);
-
-    if(node->token != "") {
-        cout << "Symbol (" << node->token << ")" << endl;
-        cout << "    code: " << huffmanCodes.at(node->token) <<  endl;
-        cout << "    frequency: " << node->count << endl;
-    }
-
-    printNode(node->right, huffmanCodes);
-
-}
-
-void HuffmanTree::showTree(){ 
-    cout << "showing current tree" << endl;
-    printNode(root, huffmanCodes); 
-}
-
-// funcao recursiva pro destructor
-static void freeNode(Node* node){
-    if(!node) return;
-
-    freeNode(node->left);
-    freeNode(node->right);
-
-    delete node;
-}
-HuffmanTree::~HuffmanTree(){ freeNode(root); }
 
 
 
