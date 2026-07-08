@@ -1,19 +1,12 @@
 #include "huffman.hpp"
 #include "arquivoManager.hpp"
 
-using namespace std;
+int main(){
+    Compressor c1("letters.txt", "letters.bin", "Letras.txt", false);
+    c1.compress();
+    c1.decompress();
 
-int main() {
-    cout << "=== INICIO ===" << endl;
-    
-    // compress("texto", true);
-    // cout << "=== DEPOIS DA COMPRESSÃO ===" << endl;
-    
-    Leitor leitor("texto.bin", "descomprimido.txt");
-    cout << "=== DEPOIS DO CONSTRUTOR ===" << endl;
-    
-    leitor.descomprimir();
-    cout << "=== DEPOIS DA DESCOMPRESSAO ===" << endl;
-    
-    return 0;
+    Compressor c2("texto.txt", "texto.bin", "Palavras.txt", true);
+    c2.compress();
+    c2.decompress();
 }

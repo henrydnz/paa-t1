@@ -7,25 +7,30 @@
 
 using namespace std;
 
-class Leitor {
+class Compressor{
     private:
-        int qtdPalavras;
-        int qtdFolhas;
-        ifstream* entrada;
-        ofstream* saida;
-        HuffmanTree* Arvore;
 
-        void montarArvore();
+    string decompressedFilename;
+    string compressedFilename;
+    string outputFilename;
+
+    bool byWord;
+
+    HuffmanTree* huffmanTree;
+
     public:
 
-    void descomprimir();
-    void comprimir(bool byWord);
+    Compressor(string decompressedFilename, string compressedFilename, string outputFilename, bool byWord) : 
+        decompressedFilename(decompressedFilename), compressedFilename(compressedFilename), outputFilename(outputFilename), byWord(byWord) {}
 
-    Leitor(string entrada, string saida);
-    ~Leitor();
-    
+    void decompress();
+    void compress();
 };
-
-using namespace std;
+// # Cab_Folhas
+// -> Quantidade de Folhas
+// -> Quantidade de Palavras
+// -> Folha("Palavra","Codigo")
+// # fim Cab_Folhas
+// Arquivo Compactado
 
 
