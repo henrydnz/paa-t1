@@ -30,8 +30,9 @@ void Compressor::decompress(){
 
     char buffer;
     int bitCount = 0;
+    int foundTokens = 0;
     Node* currentNode = ht.root;
-    for(int i = 0; i < tokenCount; i++) {
+    while(foundTokens < tokenCount) {
 
         if(bitCount == 0) {
             buffer = compressed.get();
@@ -51,6 +52,7 @@ void Compressor::decompress(){
         if(currentNode->isLeaf()) {
             decompressed << currentNode->token;
             currentNode = ht.root;
+            foundTokens++;
         }
     }
 }
