@@ -122,6 +122,7 @@ static void printNode(Node* node, const unordered_map<string, string>& huffmanCo
     printNode(node->right, huffmanCodes);
 
 }
+
 void HuffmanTree::showTree(){ 
     cout << "showing current tree" << endl;
     printNode(root, huffmanCodes); 

@@ -10,15 +10,16 @@ using namespace std;
 class Compressor{
     private:
 
+    
+    bool byWord;
+    
+    HuffmanTree* huffmanTree;
+    
+    public:
+    
     string decompressedFilename;
     string compressedFilename;
     string outputFilename;
-
-    bool byWord;
-
-    HuffmanTree* huffmanTree;
-
-    public:
 
     Compressor(string decompressedFilename, bool byWord);
 

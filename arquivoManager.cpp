@@ -97,7 +97,7 @@ void Compressor::compress(){
     ifstream inFile(decompressedFilename);
     HuffmanTree ht(inFile, byWord);
 
-    ht.showTree();// DEBUG
+    // ht.showTree();// DEBUG
     
     ofstream outFile(compressedFilename, ios::binary);
 
