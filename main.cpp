@@ -1,5 +1,5 @@
 #include "huffman.hpp"
-#include "arquivoManager.hpp"
+#include "compressor.hpp"
 
 void Comp_Desc() {
     string inputFile;
@@ -75,6 +75,8 @@ int menuCompressor() {
         case 0 : return op;
         default : cout << "Opcao invalida" << endl; return op; 
     }
+
+    return op;
 }
 
 int main(){

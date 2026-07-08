@@ -1,10 +1,18 @@
+/**
+ * @file huffman.hpp
+ * @brief Estruturas de dados para a criação e manipulação da Árvore de Huffman.
+ * @authors Henrique Diniz da Costa e Noam Daniel Wandscheer Brecher
+ */
+
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <queue>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 using namespace std;
 
@@ -18,7 +26,9 @@ class Node {
     Node* left;
     Node* right;
 
+    // criar no de caminho
     Node(int count, Node* left, Node* right) : token(""), count(count), left(left), right(right) {}
+    // criar no folha
     Node(string token, int count) : token(token), count(count), left(nullptr), right(nullptr) {}
 
     bool operator<(const Node& other) const { return count > other.count; }
@@ -38,10 +48,9 @@ class HuffmanTree{
 
     Node* root = nullptr;
 
-    //SymbolTable symbolTable;
     vector<pair<string, int>> symbols;
-    int tokenCount;
-    int leafCount;
+    int tokenCount; // numero de tokens no arquivo .txt
+    int leafCount;  // numero de folhas na arvore
 
     unordered_map<string, string> huffmanCodes;
 
@@ -51,6 +60,7 @@ class HuffmanTree{
 
     void generateCodes(Node* node, string currentCode);
 
+    // debug
     void showSymbols();
     void showCodes();
     void showTree();

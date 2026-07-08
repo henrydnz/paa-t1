@@ -1,7 +1,4 @@
 #include "huffman.hpp"
-#include <algorithm>
-#include <fstream>
-#include <queue>
 
 // === === HuffmanTree
 
@@ -44,17 +41,21 @@ void HuffmanTree::addSymbol(string symbol){
 }
 
 void HuffmanTree::buildSymbolTable(ifstream& file, bool byWord){
+    char c;
     if(!byWord){
-        char c;
-        while(file.get(c)){
-            if(!(c == '\n' || c == ' '))
-                this->addSymbol(string(1,c));
-        }
+        while(file.get(c)) this->addSymbol(string(1,c));
     } else {
-        string word;
-        while(file >> word){
-            this->addSymbol(word);
+        string word = "";
+        while(file.get(c)) {
+            if(c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+                if(!word.empty()) {
+                    this->addSymbol(word);
+                    word = "";
+                }
+                this->addSymbol(string(1, c));
+            } else word += c;
         }
+        if(!word.empty()) this->addSymbol(word);
     }
 }
 
