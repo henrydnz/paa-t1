@@ -16,7 +16,7 @@ HuffmanTree::HuffmanTree(ifstream& file, bool byWord) {
     }
 
     root = nodeQueue.top(); nodeQueue.pop();
-    generateCodes(root, "");
+    generateCodes(root, 0, 0);
 }
 
 HuffmanTree::HuffmanTree(vector<pair<string, int>> symbolList){
@@ -50,32 +50,38 @@ void HuffmanTree::buildSymbolTable(ifstream& file, bool byWord){
     char c;
 
     if(!byWord) {
+        // get every char
         while(file.get(c)) symbolFrequencyTable[string(1, c)]++;
-    } else {
-        string word = "";
-        while(file.get(c)) {
-            if(c == ' ' || c == '\n' || c == '\t' || c == '\r') {
-                if(!word.empty()) {
-                    symbolFrequencyTable[word]++;
-                    word = "";
-                }
-                symbolFrequencyTable[string(1, c)]++;
-            } else word += c;
-        }
-        if(!word.empty()) symbolFrequencyTable[word]++;
-    }
-}
-
-void HuffmanTree::generateCodes(Node* node, string currentCode) {
-    if (!node) return;
-
-    if(node->isLeaf()){
-        huffmanCodes[node->token] = currentCode;
         return;
     }
 
-    generateCodes(node->left, currentCode + "0");
-    generateCodes(node->right, currentCode + "1");
+    string word = "";
+
+    while(file.get(c)) {
+        // if letter append to word
+        if(isLetter(c)) word+=c;
+        else{
+            if(!word.empty()){
+                symbolFrequencyTable[word]++;
+                word="";
+            }
+            symbolFrequencyTable[string(1,c)]++;
+        }
+    }
+
+    if(!word.empty()) symbolFrequencyTable[word]++;
+}
+
+void HuffmanTree::generateCodes(Node* node, uint64_t currentCode, uint64_t currentLength) {
+    if (!node) return;
+
+    if(node->isLeaf()){
+        huffmanCodes[node->token] = (currentLength << CODE_SIZE) | currentCode;
+        return;
+    }
+
+    generateCodes(node->left, currentCode<<1, currentLength+1);
+    generateCodes(node->right, (currentCode<<1)|1, currentLength+1);
 }
 
 

@@ -17,14 +17,14 @@ static void writeSymbols(ofstream& compressedFile, unordered_map<string, int> sy
     }
 }
 
-static void writeBitBuffer(ofstream& compressedFile, char& buffer, int& bitCount, string code){
-    for (char c : code) {
-        buffer = (buffer << 1) | (c == '1' ? 1 : 0);
+static void writeBitBuffer(ofstream& compressedFile, char& buffer, int& bitCount, uint64_t code){
+    for(int i=(code>>CODE_SIZE)-1;i>=0;i--){
+        buffer=(buffer<<1)|((code>>i)&1);
         bitCount++;
-        if (bitCount == 8) {
+        if(bitCount==BUFFER_SIZE) {
             compressedFile.write(reinterpret_cast<const char*>(&buffer), 1);
-            buffer = 0;
-            bitCount = 0;
+            buffer=0;
+            bitCount=0;
         }
     }
 }
@@ -36,28 +36,26 @@ void Compressor::writeCompressedMessage(ifstream& originalFile, ofstream& compre
     char buffer = 0;
     int bitCount = 0;
     char c;
+
     if (!byWord) {
         while (originalFile.get(c)) {
-            string code = codes[string(1, c)];
-            writeBitBuffer(compressedFile, buffer, bitCount, code);
+            writeBitBuffer(compressedFile, buffer, bitCount, codes[string(1, c)]);
         }
     } else {
         string word = "";
         while (originalFile.get(c)) {
-            if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
-                if (!word.empty()) {
-                    string code = codes[word];
-                    writeBitBuffer(compressedFile, buffer, bitCount, code);
-                    word = "";
+            if (isLetter(c)) word+=c;
+            else{
+                if(!word.empty()){
+                    writeBitBuffer(compressedFile, buffer, bitCount, codes[word]);
+                    word="";
                 }
-                string spaceCode = codes[string(1, c)];
-                writeBitBuffer(compressedFile, buffer, bitCount, spaceCode);
-                
-            } else word += c;
+                writeBitBuffer(compressedFile, buffer, bitCount, codes[string(1,c)]);
+            }
+
         }
         if (!word.empty()) {
-            string code = codes[word];
-            writeBitBuffer(compressedFile, buffer, bitCount, code);
+            writeBitBuffer(compressedFile, buffer, bitCount, codes[word]);
         }
     }
 

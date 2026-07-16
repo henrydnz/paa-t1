@@ -27,3 +27,5 @@ string fileSize(string filename, string type, streampos filePointer){
     return type + ": " + filename + " (" + 
         to_string(static_cast<double>(filePointer)/1024.0) + "kb)\n\n"; 
 }
+
+int isLetter(char c){ return (c>='a'&&c<='z')||(c>='A'&&c<='Z'); }

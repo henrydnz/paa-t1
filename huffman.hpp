@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <algorithm>
 
+#include "util.hpp"
+
 using namespace std;
 
 /**
@@ -43,7 +45,7 @@ struct NodePointerComparator {
 
 typedef priority_queue<Node*, vector<Node*>, NodePointerComparator> NodeQueue;
 typedef pair<string, int> Symbol;
-typedef unordered_map<string, string> HuffmanCodes;
+typedef unordered_map<string, uint64_t> HuffmanCodes;
 
 /**
  * @class HuffmanTree
@@ -61,7 +63,7 @@ class HuffmanTree{
     // constroi tabela de simbolos
     void buildSymbolTable(ifstream& file, bool byWord);
     // gera hash de codigos Huffman recursivamente
-    void generateCodes(Node* node, string currentCode);
+    void generateCodes(Node* node, uint64_t currentCode, uint64_t currentLength);
 
     public:
 
