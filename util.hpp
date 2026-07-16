@@ -2,21 +2,15 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <chrono> 
+#include <fstream> 
+
 using namespace std;
 
-void clear(){
-#if defined(_WIN32)
-    system("cls");   
-#else
-    system("clear"); 
-#endif
-}
+void clearScreen();
 
-void showMenu(){
-    cout << "==================== Menu ====================" << endl
-        << "1 - Comprimir e Descomprimir um Arquivo" << endl
-        << "2 - Comprimir um Arquivo" << endl
-        << "3 - Descomprimir um Arquivo" << endl
-        << "0 - Fechar" << endl
-        << "==================== ==== ====================" << endl;
-}
+void showMenu();
+
+string timeElapsed(string filename, string action, chrono::_V2::steady_clock::time_point start, chrono::_V2::steady_clock::time_point end);
+
+string fileSize(string filename, string type, streampos filePointer);

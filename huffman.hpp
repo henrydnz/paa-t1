@@ -56,12 +56,10 @@ typedef unordered_map<string, string> HuffmanCodes;
 class HuffmanTree{    
     private:
 
-    // adiciona um simbolo na tabela
-    void addSymbol(string symbol);
+    // // adiciona um simbolo na tabela
+    // void addSymbol(string symbol);
     // constroi tabela de simbolos
     void buildSymbolTable(ifstream& file, bool byWord);
-    // constroi arvore com base na tabela de simbolos
-    void buildTree();
     // gera hash de codigos Huffman recursivamente
     void generateCodes(Node* node, string currentCode);
 
@@ -69,9 +67,7 @@ class HuffmanTree{
 
     Node* root = nullptr;
 
-    vector<Symbol> symbols;
-    int tokenCount; // numero de tokens no arquivo .txt
-    int leafCount;  // numero de folhas na arvore
+    unordered_map<string, int> symbolFrequencyTable;
 
     HuffmanCodes huffmanCodes;
 
@@ -86,7 +82,7 @@ class HuffmanTree{
      * @brief Constrói a árvore de Huffman para DESCOMPRESSÃO a partir de símbolos lidos do arquivo .bin.
      * @param symbolTable Vetor de pares contendo o token e sua respectiva frequência.
      */
-    HuffmanTree(vector<Symbol> symbolTable);
+    HuffmanTree(vector<pair<string, int>> symbolList);
 
     ~HuffmanTree();
 };

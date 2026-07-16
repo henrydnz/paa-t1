@@ -7,16 +7,12 @@ Compressor::Compressor(string originalFilename, bool byWord) {
     this->byWord = byWord;
 }
 
-static void writeSymbols(ofstream& compressedFile, vector<Symbol> symbols){
+static void writeSymbols(ofstream& compressedFile, unordered_map<string, int> symbols){
     for(Symbol symbol : symbols){
         string token = symbol.first;
-        int tokenLen = symbol.first.length();
         int frequency = symbol.second;
 
-        compressedFile.write(reinterpret_cast<char*>(&tokenLen), sizeof(int));
-
-        compressedFile.write(token.c_str(), tokenLen);
-
+        compressedFile.write(token.c_str(), token.length() + 1);
         compressedFile.write(reinterpret_cast<char*>(&frequency), sizeof(int));
     }
 }
@@ -71,10 +67,7 @@ void Compressor::writeCompressedMessage(ifstream& originalFile, ofstream& compre
     } 
 }
 
-
 int Compressor::compress(){
-    auto start = chrono::steady_clock::now();
-
     ifstream originalFile(originalFilename);
     if(!originalFile.is_open()){
         cerr << "Erro ao abrir o arquivo original " << originalFilename 
@@ -88,20 +81,26 @@ int Compressor::compress(){
         return 1;
     }
 
-    HuffmanTree ht(originalFile, byWord);
-    
-    compressedFile.write(reinterpret_cast<char*>(&ht.leafCount), sizeof(int));
-    compressedFile.write(reinterpret_cast<char*>(&ht.tokenCount), sizeof(int));
+    auto start = chrono::steady_clock::now();
 
-    writeSymbols(compressedFile, ht.symbols);
+    HuffmanTree ht(originalFile, byWord);
+
+    this->leafCount = ht.symbolFrequencyTable.size();
+
+    this->tokenCount = 0;
+    for(pair<string, int> sym : ht.symbolFrequencyTable)
+        this->tokenCount += sym.second;
+
+    compressedFile.write(reinterpret_cast<const char*>(&this->leafCount), sizeof(int));
+    compressedFile.write(reinterpret_cast<const char*>(&this->tokenCount), sizeof(int));
+
+    writeSymbols(compressedFile, ht.symbolFrequencyTable);
     writeCompressedMessage(originalFile, compressedFile, ht.huffmanCodes);
     
     auto end = chrono::steady_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    int time_elapsed = duration.count();
-    
-    cout << "Arquivo " << originalFilename << " foi comprimido com sucesso! (Tempo:" << time_elapsed << "ms)\n";
-    cout << "Output: " << compressedFilename << " (Tamanho: " << static_cast<double>(compressedFile.tellp())/1024.0 << "kb)" << endl << endl;
+    cout << timeElapsed(originalFilename, "comprimido", start, end);
+
+    cout << fileSize(compressedFilename, "output", compressedFile.tellp());
     
     originalFile.close();
     compressedFile.close();
@@ -113,10 +112,7 @@ void Compressor::getSymbols(ifstream& compressedFile){
     string symbol;
     int size, frequency;
     for(int i = 0; i < this->leafCount ; i++) {
-        compressedFile.read(reinterpret_cast<char*>(&size), sizeof(size));
-        symbol.resize(size);
-
-        compressedFile.read((&symbol[0]), size);
+        getline(compressedFile, symbol, '\0');
 
         compressedFile.read(reinterpret_cast<char*>(&frequency), sizeof(frequency));
 
@@ -151,20 +147,21 @@ void Compressor::writeDecompressedMessage(ifstream& compressedFile, ofstream& ou
 }
 
 int Compressor::decompress(){
-    auto start = chrono::steady_clock::now();
-
+    
     ifstream compressedFile(compressedFilename, ios::binary);
     if(!compressedFile.is_open()){
         cerr << "Erro ao abrir o arquivo comprimido " << compressedFilename
-            << ".\nCertifique-se de que o arquivo esta localizado na pasta raiz\ne que o nome esta correto.\n";
+        << ".\nCertifique-se de que o arquivo esta localizado na pasta raiz\ne que o nome esta correto.\n";
         return 1;
     }
-
+    
     ofstream outputFile(outputFilename);
     if(!outputFile.is_open()){
         cerr << "Erro ao criar o arquivo de saida " << outputFilename << ".\n";
         return 1;
     }
+    
+    auto start = chrono::steady_clock::now();
 
     compressedFile.read(reinterpret_cast<char*>(&this->leafCount), sizeof(int));
     compressedFile.read(reinterpret_cast<char*>(&this->tokenCount), sizeof(int));
@@ -177,11 +174,10 @@ int Compressor::decompress(){
     writeDecompressedMessage(compressedFile, outputFile);
 
     auto end = chrono::steady_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    int time_elapsed = duration.count();
-
-    cout << "Arquivo " << compressedFilename << " foi descomprimido com sucesso! (Tempo:" << time_elapsed << "ms)\n";
-    cout << "Output: " << outputFilename << " (Tamanho: " << static_cast<double>(outputFile.tellp())/1024.0 << "kb)" << endl << endl;
+    cout << timeElapsed(compressedFilename, "descomprimido", start, end);
+    
+    cout << fileSize(outputFilename, "output", outputFile.tellp());
+    
     compressedFile.close();
     outputFile.close();
 

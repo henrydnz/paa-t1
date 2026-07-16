@@ -7,6 +7,7 @@
 #include <filesystem>
 
 #include "huffman.hpp"
+#include "util.hpp"
 
 using namespace std;
 
